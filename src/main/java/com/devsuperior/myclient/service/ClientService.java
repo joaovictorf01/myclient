@@ -5,6 +5,8 @@ import java.util.Optional;
 import javax.persistence.EntityNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.devsuperior.myclient.dto.ClientDto;
 import com.devsuperior.myclient.entities.Client;
 import com.devsuperior.myclient.repositories.ClientRepository;
+import com.devsuperior.myclient.service.exceptions.DatabaseException;
 
 @Service
 public class ClientService {
@@ -67,7 +70,14 @@ public class ClientService {
     }
 
     public void delete(Long id) {
-        repository.deleteById(id);
+        try {
+
+            repository.deleteById(id);
+        } catch (EmptyResultDataAccessException e) {
+            throw new ResourceNotFoundException("Id not found " + id);
+        } catch (DataIntegrityViolationException e) {
+            throw new DatabaseException("Integrity violation");
+        }
     }
 
 }
