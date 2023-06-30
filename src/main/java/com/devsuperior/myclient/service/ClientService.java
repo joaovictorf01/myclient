@@ -1,5 +1,9 @@
 package com.devsuperior.myclient.service;
 
+import java.util.Optional;
+
+import javax.persistence.EntityNotFoundException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,8 +29,8 @@ public class ClientService {
 
     @Transactional(readOnly = true)
     public ClientDto findById(Long id) {
-        Client entity = repository.findById(id).get();
-
+        Optional<Client> obj = repository.findById(id);
+        Client entity = obj.orElseThrow(() -> new ResourceNotFoundException("Entity not found"));
         return new ClientDto(entity);
     }
 
@@ -46,16 +50,20 @@ public class ClientService {
 
     @Transactional
     public ClientDto update(Long id, ClientDto dto) {
-        Client entity = repository.getOne(id);
-        entity.setName(dto.getName());
-        entity.setCpf(dto.getCpf());
-        entity.setIncome(dto.getIncome());
-        entity.setBirtDate(dto.getBirtDate());
-        entity.setChildren(dto.getChildren());
+        try {
+            Client entity = repository.getOne(id);
+            entity.setName(dto.getName());
+            entity.setCpf(dto.getCpf());
+            entity.setIncome(dto.getIncome());
+            entity.setBirtDate(dto.getBirtDate());
+            entity.setChildren(dto.getChildren());
 
-        entity = repository.save(entity);
+            entity = repository.save(entity);
 
-        return new ClientDto(entity);
+            return new ClientDto(entity);
+        } catch (EntityNotFoundException e) {
+            throw new ResourceNotFoundException("Id not found " + id);
+        }
     }
 
     public void delete(Long id) {
